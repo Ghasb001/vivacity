@@ -16,7 +16,18 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.get('/awesome/applicant', (req: Request, res: Response) => {
-  Pool.query("SELECT * from applicant;")
+  Pool.query(`
+  SELECT *,
+  (
+    SELECT json_agg(h.hobby) as hobbies
+    FROM (
+      SELECT hobby
+      FROM hobbies
+      WHERE applicant.applicant_id = hobbies.applicant_id
+    ) AS h
+  ) AS hobbies
+FROM applicant;
+  `)
     .then((data: any) => res.send(data.rows).status(201))
     .catch((err: any) => {
       console.log(err);
@@ -31,7 +42,7 @@ app.get('/hired', async (req: Request, res: Response) => {
 })
 
 app.post('/hired', async (req: Request, res: Response) => {
-  //params should be {hired: boolean, text: string representing notes}
+  //query should be {hired: boolean, text: string representing notes}
   let properParams: boolean = Object.values(req.query).length === 2;
   if (!properParams) { res.status(500).send('Please check query parameters'); return; }
   console.log(properParams)
@@ -44,18 +55,36 @@ app.post('/hired', async (req: Request, res: Response) => {
     .catch((err: any) => res.sendStatus(500))
 })
 
+const transformHobby = (hobby: string) => {
+  let rearrange: string[] = hobby.split('');
+  rearrange[0] = rearrange[0].toUpperCase()
+  return rearrange.join('');
+}
+
 app.get('/hobbies', async (req: Request, res: Response) => {
-  Pool.query("SELECT hobby from hobbies;")
-    .then((data: any) => res.send(data.rows).status(201))
+  Pool.query(`
+  SELECT ARRAY(
+    SELECT hobby
+    FROM hobbies
+);`)
+    .then((data: any) => res.send(data.rows[0].array).status(201))
     .catch((err: any) => res.status(500).send('There is no applicant hiring status at this time'))
 })
 
 app.patch('/hobbies', async (req: Request, res: Response) => {
-  //add a hobby param as {hobby: string}
-  if (!req.query.hobby) {res.status(500).send('Please check query parameters'); return;}
-  Pool.query(`INSERT INTO hobbies(hobby) VALUES ('${req.query.hobby}');`)
+  //add a hobby query as {hobby: string}
+  if (!req.query.hobby) { res.status(500).send('Please check query parameters'); return; }
+  Pool.query(`INSERT INTO hobbies(hobby) VALUES ('${transformHobby(req.query.hobby.toString())}');`)
     .then(() => res.status(200).send('Hobby has been added!'))
     .catch((err: any) => res.sendStatus(500))
+})
+
+app.delete('/hobbies', async (req: Request, res: Response) => {
+  console.log(req.query.hobby)
+  //transformHobby(req.query.hobby.toString())
+  Pool.query(`DELETE from hobbies WHERE hobbies.hobby = '${transformHobby(req.query.hobby.toString())};`)
+    .then((data: any) => res.sendStatus(204))
+    .catch((err: any) => res.status(500).send('Hobby not found'))
 })
 
 
