@@ -28,7 +28,7 @@ app.get('/awesome/applicant', (req: Request, res: Response) => {
   ) AS hobbies
 FROM applicant;
   `)
-    .then((data: any) => res.send(data.rows).status(201))
+    .then((data: any) => res.send(data.rows).status(200))
     .catch((err: any) => {
       console.log(err);
       res.sendStatus(500)
@@ -37,7 +37,7 @@ FROM applicant;
 
 app.get('/hired', async (req: Request, res: Response) => {
   Pool.query("SELECT * from hired;")
-    .then((data: any) => res.send(data.rows).status(201))
+    .then((data: any) => res.send(data.rows).status(200))
     .catch((err: any) => res.status(500).send('There is no applicant hiring status at this time'))
 })
 
@@ -51,7 +51,7 @@ app.post('/hired', async (req: Request, res: Response) => {
   CREATE TABLE hired(hired_status BOOLEAN, notes TEXT);
   INSERT INTO hired(hired_status, notes) VALUES(${req.query.hired}, '${req.query.notes}');
   `)
-    .then(() => res.status(200).send('Applicant Status has been updated!'))
+    .then(() => res.status(201).send('Applicant Status has been updated!'))
     .catch((err: any) => res.sendStatus(500))
 })
 
@@ -67,7 +67,7 @@ app.get('/hobbies', async (req: Request, res: Response) => {
     SELECT hobby
     FROM hobbies
 );`)
-    .then((data: any) => res.send(data.rows[0].array).status(201))
+    .then((data: any) => res.send(data.rows[0].array).status(200))
     .catch((err: any) => res.status(500).send('There is no applicant hiring status at this time'))
 })
 
@@ -80,9 +80,8 @@ app.patch('/hobbies', async (req: Request, res: Response) => {
 })
 
 app.delete('/hobbies', async (req: Request, res: Response) => {
-  console.log(req.query.hobby)
   //transformHobby(req.query.hobby.toString())
-  Pool.query(`DELETE from hobbies WHERE hobbies.hobby = '${transformHobby(req.query.hobby.toString())};`)
+  Pool.query(`DELETE from hobbies WHERE hobbies.hobby = '${transformHobby(req.query.hobby.toString())}';`)
     .then((data: any) => res.sendStatus(204))
     .catch((err: any) => res.status(500).send('Hobby not found'))
 })
@@ -92,3 +91,5 @@ const port = process.env.PORT || 1128;
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${process.env.PORT}`);
 });
+
+export default app;
