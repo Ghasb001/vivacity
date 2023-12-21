@@ -45,7 +45,6 @@ app.post('/hired', async (req: Request, res: Response) => {
   //query should be {hired: boolean, text: string representing notes}
   let properParams: boolean = Object.values(req.query).length === 2;
   if (!properParams) { res.status(500).send('Please check query parameters'); return; }
-  console.log(properParams)
   Pool.query(`
   DROP TABLE IF EXISTS hired;
   CREATE TABLE hired(hired_status BOOLEAN, notes TEXT);
@@ -82,7 +81,7 @@ app.patch('/hobbies', async (req: Request, res: Response) => {
 app.delete('/hobbies', async (req: Request, res: Response) => {
   //transformHobby(req.query.hobby.toString())
   Pool.query(`DELETE from hobbies WHERE hobbies.hobby = '${transformHobby(req.query.hobby.toString())}';`)
-    .then((data: any) => res.sendStatus(204))
+    .then((data: any) => res.status(204).send('Delete Successful'))
     .catch((err: any) => res.status(500).send('Hobby not found'))
 })
 
